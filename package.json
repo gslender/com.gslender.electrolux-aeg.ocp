@@ -1,0 +1,13 @@
+{
+  "name": "com.gslender.electrolux-aeg-connected",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {},
+  "devDependencies": {
+    "@types/homey": "npm:homey-apps-sdk-v3-types@^0.3.6"
+  },
+  "dependencies": {
+    "@gslender/gigya": "^3.1.0",
+    "axios": "^1.7.2"
+  }
+}
