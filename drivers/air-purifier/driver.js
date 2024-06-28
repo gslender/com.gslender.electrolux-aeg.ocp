@@ -8,10 +8,6 @@ class AirPurifierDriver extends Driver {
 
     var devices = [];
     const appliances = await this.homey.app.getAppliancesByTypes(['AP']); // don't yet know what this would be??
-
-    this.log('********* appliances[...] ********');
-    this.log(JSON.stringify(appliances,null,2));
-    this.log('********* appliances[...] ********');
     
     for (let i = 0; i < appliances.length; i++) {
       const appliance = appliances[i];

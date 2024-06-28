@@ -29,6 +29,9 @@ class ElectroluxAEGApp extends Homey.App {
       const http = await this.ocpApiFactory.createHttp();
       const response = await http.get(`/appliances`);
       if (response) {
+        this.log('********* appliances[...] ********');
+        this.log(JSON.stringify(response.data));
+        this.log('********* appliances[...] ********');
         //TODO only return the array of appliances that have applianceData.modelName found in typesArray
         return response.data;
       }
