@@ -14,7 +14,7 @@ class ElectroluxAEGApp extends Homey.App {
     // this.homey.settings.unset('ocp.username');
     // this.homey.settings.unset('ocp.password');
 
-    this.pollTimer = {};
+    this.timeoutId = {};
 
     this.ocpApiFactory = ocpapi(
       () => { return this.homey.settings.get('aToken'); },
@@ -32,7 +32,7 @@ class ElectroluxAEGApp extends Homey.App {
       this.log('********* appliances[...] ********');
       this.log(stringify(appliances));
       this.log('**********************************');
-      this.startPolling();
+      this.startPolling(true);
     }, 1000);
   }
 
@@ -73,27 +73,41 @@ class ElectroluxAEGApp extends Homey.App {
   }
 
   async onSettingsChanged(key) {
+    if (key === 'ocp.polling') {
+      this.homey.clearInterval(this.timeoutId);
+      this.homey.setTimeout(async () => {
+        this.startPolling();
+        await this.homey.api.realtime("settingsChanged", "otherSuccess");
+      }, 500);
+    }
     if (key === 'ocp.username' || key === 'ocp.password') {
       this.log(`onSettingsChanged() ${this.homey.settings.get('ocp.username')} ${this.homey.settings.get('ocp.password')} `);
       try {
         await this.ocpApiFactory.login(this.homey.settings.get('ocp.username'), this.homey.settings.get('ocp.password'));
         await this.homey.api.realtime("settingsChanged", "loginSuccess");
-        this.homey.clearInterval(this.pollTimer);
-        this.startPolling();
+        this.homey.clearInterval(this.timeoutId);
+        this.homey.setTimeout(async () => {
+          this.startPolling();
+        }, 500);
       } catch (e) {
         await this.homey.api.realtime("settingsChanged", "Login/Password Incorrect!!");
       }
     }
   }
 
-  async startPolling() {
-    this.log(`${this.id} polling started...`);
+  async startPolling(doLog = false) {
+    let pollingInterval = this.homey.settings.get('ocp.polling');
+    if (isNaN(pollingInterval) || pollingInterval === null || pollingInterval === undefined) {
+        pollingInterval = 15000;
+    } else {
+        pollingInterval = Number(pollingInterval);
+    }
+    this.log(`${this.id} polling every ${pollingInterval/1000}sec started...`);
 
-    this.pollStatus(true);
-    this.pollTimer = this.homey.setInterval(() => {
+    this.pollStatus(doLog);
+    this.timeoutId = this.homey.setInterval(() => {
       this.pollStatus();
-      //TODO include as possible setting
-    }, 10000); // every 10 seconds     
+    }, pollingInterval); // every 10 seconds     
   }
 
   async pollStatus(doLog = false) {
