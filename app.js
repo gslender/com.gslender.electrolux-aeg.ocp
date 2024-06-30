@@ -37,14 +37,17 @@ class ElectroluxAEGApp extends Homey.App {
   }
 
   async getAppliancesByTypes(typesArray = []) {
-    const appliances = await this.getAppliances();
+    const appliances = await this.getAppliances();    
     this.log('********* appliances[...] ********');
     this.log(stringify(appliances));
     this.log('**********************************');
-    const filteredAppliances = appliances.filter(appliance =>
-      typesArray.includes(appliance.applianceData.modelName)
-    );
-    return filteredAppliances;
+    if (typesArray.length > 1) {
+      const filteredAppliances = appliances.filter(appliance =>
+        typesArray.includes(appliance.applianceData.modelName)
+      );
+      return filteredAppliances;
+    }
+    return appliances;
   }
 
   async getAppliances() {
@@ -57,10 +60,9 @@ class ElectroluxAEGApp extends Homey.App {
         return [];
       }
     } catch (e) {
-      throw new Error(`Connection Error!?`);
+      throw new Error(`Get Appliances Error!? ${error}`);
     }
   }
-
 
   async getApplianceState(id) {
     try {
@@ -68,9 +70,19 @@ class ElectroluxAEGApp extends Homey.App {
       const response = await http.get(`/appliances/${id}`);
       return response.data ?? {};
     } catch (e) {
-      throw new Error(`Connection Error!?`);
+      throw new Error(`Get Appliance State Error!? ${id} : ${error}`);
     }
   }
+
+  async sendDeviceCommand(id, command) {
+
+    try {
+      const http = await this.ocpApiFactory.createHttp();
+      await http.put(`/appliances/${id}/command`,command);
+    } catch (e) {
+      throw new Error(`Send Command Error!? ${id} : ${error}`);
+    }
+}
 
   async onSettingsChanged(key) {
     if (key === 'ocp.polling') {
